@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="test.pfx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="test.pfx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MDACSAPI">
+      <HintPath>..\..\MDACSDatabase\MDACSAPI\bin\Debug\netstandard2.0\MDACSAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="MDACSDatabase">
+      <HintPath>..\..\MDACSDatabase\MDACSDatabase\bin\Debug\netcoreapp2.0\MDACSDatabase.dll</HintPath>
+    </Reference>
+    <Reference Include="MDACSHTTPServer">
+      <HintPath>..\..\MDACSDatabase\MDACSHTTPServer\bin\Debug\netstandard2.0\MDACSHTTPServer.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
