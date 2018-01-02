@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
+﻿/// Testing framework based on a little I saw of xUnit. Could not get xUnit to work. Got tired
+/// of playing with its silly requirements and difficult installation. Decided to just make something
+/// that worked how I liked it. Took same amount of time to have figured xUnit out and I am happier.
+
+using Newtonsoft.Json.Linq;
 using System;
 using MDACS;
 using Newtonsoft.Json;
@@ -7,19 +11,59 @@ using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using System.IO;
 using System.Threading;
-using MDACS.API.Responses;
 using System.Threading.Tasks;
 using MDACS.Server;
+using System.Reflection;
+using System.Collections.Generic;
 
 namespace MDACS.Test
 {
-    class TestException : Exception
+    class Fact: Attribute
     {
+        public string fact_dep;
 
+        public Fact()
+        {
+            this.fact_dep = null;
+        }
+
+        public Fact(string fact_dep)
+        {
+            this.fact_dep = fact_dep;
+        }
+
+        public bool FactDepsMeet(HashSet<string> fact_deps_ran)
+        {
+            if (fact_dep == null)
+            {
+                return true;
+            }
+
+            return fact_deps_ran.Contains(fact_dep);
+        }
+
+        public void Execute(object instance, MethodInfo minfo)
+        {
+            minfo.Invoke(instance, null);
+        }
     }
 
-    static class Database
+    class FactAsync: Fact
     {
+        public FactAsync() : base()
+        {
+        }
+
+        public FactAsync(string fact_dep): base(fact_dep)
+        {
+        }
+
+        public void ExecuteAsync(object instance, MethodInfo minfo)
+        {
+            var tsk = minfo.Invoke(instance, null) as Task;
+
+            tsk.Wait();
+        }
     }
 
     class TestPlatform
@@ -67,8 +111,8 @@ namespace MDACS.Test
             dbcfg.data_path = data_path;
             dbcfg.metajournal_path = metajournal_path;
             dbcfg.port = port;
-            dbcfg.cert_path = cert_path;
-            dbcfg.cert_pass = "hello";
+            dbcfg.ssl_cert_path = cert_path;
+            dbcfg.ssl_cert_pass = "hello";
 
             byte[] buf = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dbcfg, Formatting.Indented));
 
@@ -83,6 +127,9 @@ namespace MDACS.Test
                 });
             });
 
+            // Suppress the database output.
+            //MDACS.Database.Program.logger_output_base += (JObject item) => true;
+
             db_thread.Start();
         }
 
@@ -92,81 +139,106 @@ namespace MDACS.Test
         }
     }
 
-    static class Program
+    public static class Assert
     {
-        public static bool CheckTrust(object sender, X509Certificate cert, X509Chain chain, System.Net.Security.SslPolicyErrors err)
+        public static void True(bool v)
         {
-            Console.WriteLine("checking cert", cert);
-            return true;
-        }
-
-        static void Assert(bool condition)
-        {
-            if (!condition)
+            if (!v)
             {
-                throw new Exception("Assertion failure.");
+                throw new Exception("Assertion Failure");
             }
         }
 
-        static void Main(string[] args)
+        public static void Failed()
         {
-            var platform = new TestPlatform("https://epdmdacs.kmcg3413.net:34002", 34001);
+            throw new Exception("Assertion Failure");
+        }
+    }
 
-            Thread.Sleep(2000);
-
-            ServicePointManager.ServerCertificateValidationCallback = CheckTrust;
-
-            JObject config = new JObject();
-
-            config["database_url"] = "https://localhost:34001";
-            config["auth_url"] = "https://epdmdacs.kmcg3413.net:34002";
-            config["username"] = "kmcguire";
-            config["password"] = "Z4fmv96s#7";
-
-            var session = new API.Session(
-                "https://epdmdacs.kmcg3413.net:34002",
-                "https://localhost:34001",
-                "kmcguire",
-                "Z4fmv96s#7"
-            );
-
-            var rand_data = new DoubleEndedStream();
-
-            Random rng = new Random();
-
-            var chunk = new byte[1024];
-
-            for (long sent = 0; sent < 1024 * 1024 * 2; sent += chunk.Length)
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            foreach (var tdef in Assembly.GetExecutingAssembly().DefinedTypes)
             {
-                rng.NextBytes(chunk);
-                rand_data.Write(chunk, 0, chunk.Length);
+                var fact_methods = new List<(Fact, MethodInfo)>();
+
+                foreach (var tmeth in tdef.DeclaredMethods)
+                {
+                    var fact = tmeth.GetCustomAttribute<Fact>(true);
+
+                    if (fact == null)
+                    {
+                        continue;
+                    }
+
+                    fact_methods.Add((fact, tmeth));
+                }
+
+                if (fact_methods.Count < 1)
+                {
+                    continue;
+                }
+
+                var type_instance = Activator.CreateInstance(tdef);
+
+                var fact_deps_ran = new HashSet<string>();
+                var fact_deps_passed = new HashSet<string>();
+                var fact_deps_failed = new HashSet<string>();
+
+                while (fact_methods.Count > 0) {
+                    for (int x = 0; x < fact_methods.Count; ++x) {
+                        var pair = fact_methods[x];
+                        var fact = pair.Item1;
+                        var tmeth = pair.Item2;
+                        var method_id = tmeth.Name;
+
+                        // If all deps have passed then we can run this dep.
+                        if (!fact.FactDepsMeet(fact_deps_passed))
+                        {
+                            // If not all deps have passed but all deps have ran then
+                            // consider this fact as having failed.
+                            if (fact.FactDepsMeet(fact_deps_ran))
+                            {
+                                fact_deps_failed.Add(method_id);
+                                fact_deps_ran.Add(method_id);
+                                fact_methods.RemoveAt(x);
+                                break;
+                            }
+
+                            continue;
+                        }
+
+                        try
+                        {
+                            fact_deps_ran.Add(tmeth.Name);
+
+                            if (fact is FactAsync)
+                            {
+                                (fact as FactAsync).ExecuteAsync(type_instance, tmeth);
+                            } else
+                            {
+                                fact.Execute(type_instance, tmeth);
+                            }
+
+                            fact_deps_passed.Add(tmeth.Name);
+
+                            Console.WriteLine($"{tdef.Name}.{tmeth.Name} PASSED");
+                        } catch (Exception ex)
+                        {
+                            fact_deps_failed.Add(tmeth.Name);
+
+                            Console.WriteLine($"{tdef.Name}.{tmeth.Name} FAILED");
+                            Console.WriteLine(ex.ToString());
+                        } finally
+                        {
+                            fact_methods.RemoveAt(x);
+                        }
+
+                        break;
+                    }
+                }
             }
-
-            var upresp = session.UploadAsync(
-                rand_data.Length,
-                "trash",
-                "2017-12-19",
-                "TESTDEVICE",
-                "131211",
-                "kmcguire",
-                rand_data
-            );
-
-            upresp.Wait();
-
-            Assert(upresp.Result.success);
-
-            var sid = upresp.Result.security_id;
-
-            var meta = new JObject();
-
-            meta["note"] = "This is a note having been set.";
-
-            var csresp = session.CommitSetAsync(sid, meta);
-
-            csresp.Wait();
-
-            Assert(csresp.Result.success);
         }
     }
 }

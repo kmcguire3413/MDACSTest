@@ -25,7 +25,7 @@
       <HintPath>..\..\MDACSDatabase\MDACSDatabase\bin\Debug\netcoreapp2.0\MDACSDatabase.dll</HintPath>
     </Reference>
     <Reference Include="MDACSHTTPServer">
-      <HintPath>..\..\MDACSDatabase\MDACSHTTPServer\bin\Debug\netstandard2.0\MDACSHTTPServer.dll</HintPath>
+      <HintPath>..\..\MDACSHTTPServer\bin\Debug\netstandard2.0\MDACSHTTPServer.dll</HintPath>
     </Reference>
   </ItemGroup>
 
