@@ -7,10 +7,12 @@
 
   <ItemGroup>
     <None Remove="test.pfx" />
+    <None Remove="video.mp4" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="test.pfx" />
+    <EmbeddedResource Include="video.mp4" />
   </ItemGroup>
 
   <ItemGroup>

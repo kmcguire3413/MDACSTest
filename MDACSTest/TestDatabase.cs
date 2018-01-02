@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using MDACS.API;
 using Newtonsoft.Json.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Reflection;
 
 namespace MDACSTest
 {
@@ -195,8 +196,43 @@ namespace MDACSTest
         }
 
         [FactAsync("TestCommitSetFirst")]
+        async Task TestGetMP4Duration()
+        {
+            var asm = Assembly.GetExecutingAssembly();
+
+            using (var asm_stream = asm.GetManifestResourceStream("MDACSTest.video.mp4"))
+            {
+                var resp = await session.UploadAsync(
+                    asm_stream.Length,
+                    "mp4",
+                    "2030-01-01",
+                    "mp4device",
+                    "050001",
+                    "mp4deviceuser",
+                    asm_stream
+                );
+
+                Assert.True(resp.success);
+            }
+
+            var listing = await session.Data();
+
+            foreach (var item in listing.data)
+            {
+                if (item.devicestr != null && item.devicestr.Equals("mp4device"))
+                {
+                    if (item.duration == 5.312)
+                        return;
+                }
+            }
+
+            Assert.Failed();
+        }
+
+        [FactAsync("TestCommitSetFirst")]
         async Task TestCommitConfiguration()
         {
+
         }
 
         [FactAsync("TestCommitSetFirst")]
