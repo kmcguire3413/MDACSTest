@@ -71,8 +71,6 @@ namespace MDACS.Test
         public String path_base { get; }
 
         public TestPlatform(
-            String auth_url,
-            ushort port
         )
         {
             path_base = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
@@ -82,6 +80,7 @@ namespace MDACS.Test
             Directory.CreateDirectory(path_base);
 
             var dbcfg = new MDACS.Database.ProgramConfig();
+            var authcfg = new MDACS.Auth.ProgramConfig();
 
             var config_path = Path.Combine(path_base, "config");
             var data_path = Path.Combine(path_base, "data");
@@ -106,17 +105,26 @@ namespace MDACS.Test
                 fp.Dispose();
             }
 
-            dbcfg.auth_url = auth_url;
+            dbcfg.auth_url = "http://localhost:34002";
             dbcfg.config_path = config_path;
             dbcfg.data_path = data_path;
             dbcfg.metajournal_path = metajournal_path;
-            dbcfg.port = port;
-            dbcfg.ssl_cert_path = cert_path;
-            dbcfg.ssl_cert_pass = "hello";
+            dbcfg.port = 34001;
+            //dbcfg.ssl_cert_path = cert_path;
+            //dbcfg.ssl_cert_pass = "hello";
+
+            authcfg.data_base_path = path_base;
+            authcfg.port = 34002;
+            //authcfg.ssl_cert_path = cert_path;
+            //authcfg.ssl_cert_pass = "hello";
 
             byte[] buf = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dbcfg, Formatting.Indented));
-
             fp = File.OpenWrite(Path.Combine(path_base, "dbconfig.json"));
+            fp.Write(buf, 0, buf.Length);
+            fp.Dispose();
+
+            buf = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(authcfg, Formatting.Indented));
+            fp = File.OpenWrite(Path.Combine(path_base, "authconfig.json"));
             fp.Write(buf, 0, buf.Length);
             fp.Dispose();
 
@@ -127,9 +135,17 @@ namespace MDACS.Test
                 });
             });
 
+            var auth_thread = new Thread(() =>
+            {
+                MDACS.Auth.Program.Main(new string[] {
+                   Path.Combine(path_base, "authconfig.json")
+                });
+            });
+
             // Suppress the database output.
             //MDACS.Database.Program.logger_output_base += (JObject item) => true;
 
+            auth_thread.Start();
             db_thread.Start();
         }
 
@@ -213,6 +229,8 @@ namespace MDACS.Test
                         {
                             fact_deps_ran.Add(tmeth.Name);
 
+                            Console.WriteLine($"Running test {tdef.Name}.{tmeth.Name}");
+
                             if (fact is FactAsync)
                             {
                                 (fact as FactAsync).ExecuteAsync(type_instance, tmeth);
@@ -237,6 +255,11 @@ namespace MDACS.Test
 
                         break;
                     }
+                }
+
+                foreach (var result in fact_deps_failed)
+                {
+                    Console.WriteLine($"{result} FAILED");
                 }
             }
         }

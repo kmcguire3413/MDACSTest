@@ -10,6 +10,7 @@ using MDACS.API;
 using Newtonsoft.Json.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection;
+using Newtonsoft.Json;
 
 namespace MDACSTest
 {
@@ -38,15 +39,15 @@ namespace MDACSTest
 
             ServicePointManager.ServerCertificateValidationCallback = CheckTrust;
 
-            platform = new TestPlatform("https://epdmdacs.kmcg3413.net:34002", 34001);
+            platform = new TestPlatform();
 
             Thread.Sleep(2000);
 
             session = new Session(
-                "https://epdmdacs.kmcg3413.net:34002",
-                "https://localhost:34001",
-                "kmcguire",
-                "Z4fmv96s#7"
+                "http://localhost:34002",
+                "http://localhost:34001",
+                "admin",
+                "abc"
             );
 
             return true;
@@ -229,20 +230,46 @@ namespace MDACSTest
             Assert.Failed();
         }
 
-        [FactAsync("TestCommitSetFirst")]
+        [FactAsync()]
         async Task TestCommitConfiguration()
         {
+            var resp = await session.CommitConfigurationAsync("somedevice", "bobthebuilder", "{ \"haha\": true }");
 
+            Assert.True(resp.success);
         }
 
-        [FactAsync("TestCommitSetFirst")]
+        class ConfigFileData
+        {
+            public string userid;
+            public string config_data;
+        }
+
+        [FactAsync("TestEnumerateConfigurations")]
         async Task TestDeviceConfig()
         {
+            var resp = await session.DeviceConfig("somedevice", "{ \"haha\": false }");
+
+            Assert.True(resp.success);
+
+            var cfd = JsonConvert.DeserializeObject<ConfigFileData>(resp.config_data);
+
+            Assert.True(cfd.userid.Equals("bobthebuilder"));
+            Assert.True(cfd.config_data.Equals("{\r\r\n  \"haha\": true\r\r\n}"));
         }
 
-        [FactAsync("TestCommitSetFirst")]
+        [FactAsync("TestCommitConfiguration")]
         async Task TestEnumerateConfigurations()
         {
+            var resp = await session.EnumerateConfigurations();
+
+            Assert.True(resp.success);
+            Assert.True(resp.configs.Count == 1);
+            Assert.True(resp.configs.ContainsKey("somedevice"));
+
+            var cfd = JsonConvert.DeserializeObject<ConfigFileData>(resp.configs["somedevice"]);
+
+            Assert.True(cfd.userid.Equals("bobthebuilder"));
+            Assert.True(cfd.config_data.Equals("{ \"haha\": true }"));
         }
 
         [FactAsync("TestCommitSetFirst")]
@@ -258,6 +285,24 @@ namespace MDACSTest
         [FactAsync("TestDownload")]
         async Task TestDelete()
         {
+            var resp = await session.Data();
+
+            var aitem = resp.data[1];
+
+            var sid = aitem.security_id;
+
+            await session.Delete(sid);
+
+
+            resp = await session.Data();
+
+            foreach (var item in resp.data)
+            {
+                if (item.security_id == sid)
+                {
+                    Assert.Failed();
+                }
+            }
         }
     }
 }
