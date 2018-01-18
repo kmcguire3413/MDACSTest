@@ -1,0 +1,50 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "compile jsx for auth project",
+            "command": "/usr/bin/python3",
+            "type": "process",
+            "options": {
+                "cwd": "../../MDACSAuth/MDACSAuth/"
+            },
+            "args": [
+                "../../MDACSAuth/MDACSAuth/pre-build.py",
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },        
+        {
+            "label": "build testing",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "./"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build release",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "-c", "Release",
+                "./"
+            ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }        
+    ]
+}
