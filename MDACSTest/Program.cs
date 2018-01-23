@@ -92,6 +92,8 @@ namespace MDACS.Test
 
             var cert_path = Path.Combine(security_path, "cert.pfx");
 
+            var users_path = Path.Combine(path_base, "users.json");
+
             Directory.CreateDirectory(config_path);
             Directory.CreateDirectory(data_path);
             Directory.CreateDirectory(security_path);
@@ -101,6 +103,13 @@ namespace MDACS.Test
             using (var asm_stream = asm.GetManifestResourceStream("MDACSTest.test.pfx"))
             {
                 fp = File.OpenWrite(cert_path);
+                asm_stream.CopyTo(fp);
+                fp.Dispose();
+            }
+
+            using (var asm_stream = asm.GetManifestResourceStream("MDACSTest.users.json"))
+            {
+                fp = File.OpenWrite(users_path);
                 asm_stream.CopyTo(fp);
                 fp.Dispose();
             }
@@ -255,6 +264,11 @@ namespace MDACS.Test
 
                         break;
                     }
+                }
+
+                foreach (var result in fact_deps_passed)
+                {
+                    Console.WriteLine($"{result} PASSED");
                 }
 
                 foreach (var result in fact_deps_failed)

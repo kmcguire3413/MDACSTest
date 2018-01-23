@@ -254,7 +254,7 @@ namespace MDACSTest
             var cfd = JsonConvert.DeserializeObject<ConfigFileData>(resp.config_data);
 
             Assert.True(cfd.userid.Equals("bobthebuilder"));
-            Assert.True(cfd.config_data.Equals("{\r\r\n  \"haha\": true\r\r\n}"));
+            Assert.True(cfd.config_data.Equals("{\r\n  \"haha\": true\r\n}"));
         }
 
         [FactAsync("TestCommitConfiguration")]
@@ -282,6 +282,29 @@ namespace MDACSTest
         {
         }
 
+        [FactAsync("TestCommitSetFirst")]
+        async Task TestDataPrivacy() {
+            var session = new Session(
+                "http://localhost:34002",
+                "http://localhost:34001",
+                "developer",
+                "developer"
+            );
+
+            foreach (var item in (await session.Data()).data) {
+                // Ensure this string which was placed by TestCommitSetFirst
+                // is not present on any notes. This ensures that the privacy
+                // feature has scrambled it.
+                var a = item.note != null ? item.note.IndexOf("This is a note") > -1 : false;
+                var b = item.devicestr.Equals("testdevice");
+                var c = item.userstr.Equals("kmcguire");
+                
+                if (a || b || c) {
+                    Assert.Failed();
+                }
+            }
+        }
+
         [FactAsync("TestDownload")]
         async Task TestDelete()
         {
@@ -298,7 +321,10 @@ namespace MDACSTest
 
             foreach (var item in resp.data)
             {
-                if (item.security_id == sid)
+                // The item never disappears from the metadata; however, it does
+                // have the `dqpath` forced to null to indicate there is no local
+                // path to the actual data.
+                if (item.security_id == sid && item.fqpath != null)
                 {
                     Assert.Failed();
                 }
