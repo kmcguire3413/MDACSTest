@@ -282,13 +282,14 @@ namespace MDACSTest
         {
         }
 
+        /*
         [FactAsync("TestCommitSetFirst")]
         async Task TestDataPrivacy() {
             var session = new Session(
                 "http://localhost:34002",
                 "http://localhost:34001",
-                "developer",
-                "developer"
+                "apple",
+                "apple"
             );
 
             foreach (var item in (await session.Data()).data) {
@@ -304,6 +305,100 @@ namespace MDACSTest
                 }
             }
         }
+        */
+
+        [FactAsync("TestDownload")]
+        async Task TestNormalUserChangeState() {
+            var session = new Session(
+                "http://localhost:34002",
+                "http://localhost:34001",
+                "apple",
+                "abc"
+            );
+
+            
+            var resp = await session.Data();
+
+            try {
+                // This may fail with a 403 exception, which is OK.
+                var r0 = await session.BatchSingleOps(new MDACS.API.Requests.BatchSingleOp[] {
+                    new MDACS.API.Requests.BatchSingleOp() {
+                        sid = resp.data[0].security_id,
+                        field_name = "state",
+                        value = JToken.FromObject("something"),
+                    },
+                });
+
+                // This user should not be able to modify the state of this item.
+                Assert.True(!r0.success);                
+            } catch (WebException i) {
+                if ((int)((HttpWebResponse)i.Response).StatusCode == 403) {
+                    // An acceptable response.
+                    return;
+                }
+            }
+        }
+
+        [FactAsync("TestDownload")]
+        async Task TestNormalUserChangeNote() {
+            var session = new Session(
+                "http://localhost:34002",
+                "http://localhost:34001",
+                "apple",
+                "abc"
+            );
+
+            var resp = await session.Data();
+
+            var r1 = await session.BatchSingleOps(new MDACS.API.Requests.BatchSingleOp[] {
+                new MDACS.API.Requests.BatchSingleOp() {
+                    sid = resp.data[0].security_id,
+                    field_name = "note",
+                    value = JToken.FromObject("something"),
+                },
+            });
+
+            // The user should be able to modify the item note field.
+            Assert.True(r1.success);         
+        }
+
+        [FactAsync("TestDownload")]
+        async Task TestNormalUserDelete() {
+            var session = new Session(
+                "http://localhost:34002",
+                "http://localhost:34001",
+                "apple",
+                "abc"
+            );
+
+            var resp = await session.Data();
+
+            var aitem = resp.data[1];
+
+            var sid = aitem.security_id;
+
+            try {
+                await session.Delete(sid);
+            } catch (WebException i) {
+                if ((int)((HttpWebResponse)i.Response).StatusCode == 403) {
+                    // An acceptable response.
+                    return;
+                }
+            }
+
+            resp = await session.Data();
+
+            foreach (var item in resp.data)
+            {
+                // The item never disappears from the metadata; however, it does
+                // have the `dqpath` forced to null to indicate there is no local
+                // path to the actual data.
+                if (item.security_id == sid && item.fqpath == null)
+                {
+                    Assert.Failed();
+                }
+            }                   
+        }        
 
         [FactAsync("TestDownload")]
         async Task TestDelete()
@@ -315,7 +410,6 @@ namespace MDACSTest
             var sid = aitem.security_id;
 
             await session.Delete(sid);
-
 
             resp = await session.Data();
 
