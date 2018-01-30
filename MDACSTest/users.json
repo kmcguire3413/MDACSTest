@@ -1,0 +1,24 @@
+{
+    "admin":{
+        "name":"Default Administrator User",
+        "user":"admin",
+        "hash":"ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f",
+        "admin":true,
+        "userfilter":null,
+        "can_delete":true,
+        "developer_privacy_feature":false,
+        "phone":null,
+        "email":null
+    },
+    "developer":{
+        "name":null,
+        "user":"developer",
+        "hash":"1095202bde8d5fdb0990c25dc666d79112f8915c926fb6cdc77d2786f5f94db2654068f1365fcdfab506f04859ae6f5e9725c81bea1c771755345cc36f4a6668",
+        "admin":true,
+        "userfilter":null,
+        "can_delete":true,
+        "developer_privacy_feature":true,
+        "phone":"",
+        "email":""
+    }
+}

@@ -8,11 +8,13 @@
   <ItemGroup>
     <None Remove="test.pfx" />
     <None Remove="video.mp4" />
+    <None Remove="users.json" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="test.pfx" />
     <EmbeddedResource Include="video.mp4" />
+    <EmbeddedResource Include="users.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,5 +24,6 @@
   <ItemGroup>
     <ProjectReference Include="./../../MDACSAuth/MDACSAuth/MDACSAuth.csproj" />
     <ProjectReference Include="./../../MDACSDatabase/MDACSDatabase/MDACSDatabase.csproj" />
+    <ProjectReference Include="./../../MDACSApp/MDACSApp.csproj" />
   </ItemGroup>
 </Project>
