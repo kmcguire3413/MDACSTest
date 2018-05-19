@@ -11,6 +11,7 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection;
 using System.IO;
+using System.Diagnostics;
 
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
