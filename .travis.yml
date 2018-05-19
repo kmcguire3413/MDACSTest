@@ -10,6 +10,7 @@ before_install: true
 install: true
 before_script: true
 script:
+ - cd MDACSTest
  - dotnet restore
  - dotnet build
  - dotnet run
