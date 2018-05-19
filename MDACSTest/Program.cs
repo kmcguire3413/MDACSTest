@@ -156,6 +156,8 @@ namespace MDACS.Test
                 });
             });
 
+            db_thread.IsBackground = true;
+
             var auth_thread = new Thread(() =>
             {
                 MDACS.Auth.Program.Main(new string[] {
@@ -163,12 +165,16 @@ namespace MDACS.Test
                 });
             });
 
+            auth_thread.IsBackground = true;
+
             var app_thread = new Thread(() => 
             {
                 MDACS.App.Program.Main(new string[] {
                     Path.Combine(path_base, "appconfig.json")
                 });
             });
+
+            app_thread.IsBackground = true;
 
             // Suppress the database output.
             //MDACS.Database.Program.logger_output_base += (JObject item) => true;
@@ -297,6 +303,7 @@ namespace MDACS.Test
                 }
 
                 Console.WriteLine("Testing done.");
+
             }
         }
     }
