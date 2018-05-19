@@ -1,0 +1,9 @@
+[submodule "MDACSApp"]
+	path = MDACSApp
+	url = https://github.com/kmcguire3413/MDACSApp.git
+[submodule "MDACSDatabase"]
+	path = MDACSDatabase
+	url = https://github.com/kmcguire3413/MDACSDatabase.git
+[submodule "MDACSAuth"]
+	path = MDACSAuth
+	url = https://github.com/kmcguire3413/MDACSAuth.git
