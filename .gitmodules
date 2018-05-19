@@ -7,3 +7,9 @@
 [submodule "MDACSAuth"]
 	path = MDACSAuth
 	url = https://github.com/kmcguire3413/MDACSAuth.git
+[submodule "MDACSHTTPServer"]
+	path = MDACSHTTPServer
+	url = https://github.com/kmcguire3413/MDACSHTTPServer.git
+[submodule "MDACSAPI"]
+	path = MDACSAPI
+	url = https://github.com/kmcguire3413/MDACSAPI.git
