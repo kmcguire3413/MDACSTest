@@ -66,12 +66,11 @@ namespace MDACS.Test
         }
     }
 
-    class TestPlatform
+    public class TestPlatform
     {
         public String path_base { get; }
 
-        public TestPlatform(
-        )
+        public TestPlatform()
         {
             path_base = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
 
@@ -296,6 +295,8 @@ namespace MDACS.Test
                 {
                     Console.WriteLine($"{result} FAILED");
                 }
+
+                Console.WriteLine("Testing done.");
             }
         }
     }
