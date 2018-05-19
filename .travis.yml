@@ -11,8 +11,6 @@ install: true
 before_script: true
 script:
  - cd MDACSTest
- - dotnet restore
- - dotnet build
  - dotnet run
 before_cache: true
 before_deploy: true
