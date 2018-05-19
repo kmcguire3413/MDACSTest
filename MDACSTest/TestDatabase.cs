@@ -1,15 +1,18 @@
 ﻿using MDACS.Server;
 using MDACS.Test;
+using MDACS.API;
+
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using MDACS.API;
-using Newtonsoft.Json.Linq;
+using System.Text;
+using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Reflection;
+using System.IO;
+
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 
 namespace MDACSTest
@@ -33,7 +36,7 @@ namespace MDACSTest
                 System.Net.Security.SslPolicyErrors err
                 )
             {
-                Console.WriteLine($"checking cert {cert} {chain} {err}");
+                Debug.WriteLine($"checking cert {cert} {chain} {err}");
                 return true;
             }
 
@@ -70,7 +73,7 @@ namespace MDACSTest
             long size
         )
         {
-            var rand_data = new DoubleEndedStream();
+            var randomData = new MemoryStream();
 
             Random rng = new Random();
 
@@ -79,19 +82,19 @@ namespace MDACSTest
             for (long sent = 0; sent < size; sent += chunk.Length)
             {
                 rng.NextBytes(chunk);
-                await rand_data.WriteAsync(chunk, 0, chunk.Length);
+                await randomData.WriteAsync(chunk, 0, chunk.Length);
             }
 
-            rand_data.Dispose();
+            randomData.Seek(0, SeekOrigin.Begin);
 
             return await session.UploadAsync(
-                rand_data.Length,
+                randomData.Length,
                 datatype,
                 datestr,
                 devicestr,
                 timestr,
                 userstr,
-                rand_data
+                randomData
             );
         }
 
