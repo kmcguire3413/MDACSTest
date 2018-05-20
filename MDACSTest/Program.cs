@@ -208,21 +208,21 @@ namespace MDACS.Test
 
     public class Program
     {
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
             bool sleepForever = false;
 
             if (args.Length < 1) {
                 Console.WriteLine("Specify the location of the web resources directory as the first argument.");
                 Console.WriteLine("This should be the /webres/ folder in the MDACSApp project.");
-                return;
+                return -1;
             }
 
             var webResourcesPath = args[0];
 
             if (!Directory.Exists(webResourcesPath)) {
                 Console.WriteLine($"The provided path {webResourcesPath} does not appear to be accessible or exist.");
-                return;
+                return -1;
             }
 
             foreach (var arg in args) {
@@ -329,7 +329,13 @@ namespace MDACS.Test
                     Console.WriteLine("Sleeping forever. Services will remain running and operational.");
                     Thread.Sleep(1000 * 60 * 60 * 24);
                 }
+
+                if (fact_deps_failed.Count > 0) {
+                    return -1;
+                }
             }
+
+            return 0;
         }
     }
 }

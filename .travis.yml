@@ -15,7 +15,7 @@ script:
  - npm install babel-cli babel-plugin-transform-react-jsx
  - cd ./../../
  - cd MDACSTest
- - dotnet run "./../MDACSApp/webres"
+ - dotnet run "./../MDACSApp/MDACSApp/webres"
 before_cache: true
 before_deploy: true
 deploy:
