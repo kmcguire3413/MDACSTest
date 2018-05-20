@@ -11,7 +11,7 @@ install: true
 before_script: true
 script:
  - cd MDACSTest
- - dotnet run
+ - dotnet run "./../MDACSApp/webres"
 before_cache: true
 before_deploy: true
 deploy:

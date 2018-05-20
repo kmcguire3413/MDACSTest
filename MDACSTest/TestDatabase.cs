@@ -23,12 +23,12 @@ namespace MDACSTest
         private TestPlatform platform;
         private Session session;
 
-        public TestDatabase()
+        public TestDatabase(string webResourcesPath)
         {
-            CreateNewPlatformAndSession();
+            CreateNewPlatformAndSession(webResourcesPath);
         }
 
-        private bool CreateNewPlatformAndSession()
+        private bool CreateNewPlatformAndSession(string webResourcesPath)
         {
             bool CheckTrust(
                 object sender, 
@@ -43,7 +43,7 @@ namespace MDACSTest
 
             ServicePointManager.ServerCertificateValidationCallback = CheckTrust;
 
-            platform = new TestPlatform();
+            platform = new TestPlatform(webResourcesPath);
 
             Thread.Sleep(2000);
 

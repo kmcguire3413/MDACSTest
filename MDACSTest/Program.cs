@@ -70,7 +70,7 @@ namespace MDACS.Test
     {
         public String path_base { get; }
 
-        public TestPlatform()
+        public TestPlatform(string webResourcesPath)
         {
             path_base = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
 
@@ -130,7 +130,7 @@ namespace MDACS.Test
             appcfg.auth_url = "http://localhost:34002";
             appcfg.db_url = "http://localhost:34001";
             appcfg.port = 34000;
-            appcfg.web_resources_path = @"/home/kmcguire/extra/old/source/repos/MDACSApp/webres";
+            appcfg.web_resources_path = webResourcesPath;
             //appcfg.ssl_cert_path = cert_path;
             //appcfg.ssl_cert_pass = "hello";
 
@@ -210,6 +210,27 @@ namespace MDACS.Test
     {
         public static void Main(string[] args)
         {
+            bool sleepForever = false;
+
+            if (args.Length < 1) {
+                Console.WriteLine("Specify the location of the web resources directory as the first argument.");
+                Console.WriteLine("This should be the /webres/ folder in the MDACSApp project.");
+                return;
+            }
+
+            var webResourcesPath = args[0];
+
+            if (!Directory.Exists(webResourcesPath)) {
+                Console.WriteLine($"The provided path {webResourcesPath} does not appear to be accessible or exist.");
+                return;
+            }
+
+            foreach (var arg in args) {
+                if (arg.Equals("sleepforever")) {
+                    sleepForever = true;
+                }
+            }
+
             foreach (var tdef in Assembly.GetExecutingAssembly().DefinedTypes)
             {
                 var fact_methods = new List<(Fact, MethodInfo)>();
@@ -231,7 +252,7 @@ namespace MDACS.Test
                     continue;
                 }
 
-                var type_instance = Activator.CreateInstance(tdef);
+                var type_instance = Activator.CreateInstance(tdef, new object[] { args[0] });
 
                 var fact_deps_ran = new HashSet<string>();
                 var fact_deps_passed = new HashSet<string>();
@@ -304,6 +325,10 @@ namespace MDACS.Test
 
                 Console.WriteLine("Testing done.");
 
+                if (sleepForever) {
+                    Console.WriteLine("Sleeping forever. Services will remain running and operational.");
+                    Thread.Sleep(1000 * 60 * 60 * 24);
+                }
             }
         }
     }
