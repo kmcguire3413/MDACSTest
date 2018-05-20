@@ -10,6 +10,10 @@ before_install: true
 install: true
 before_script: true
 script:
+ - cd MDACSApp
+ - cd MDACSApp
+ - npm install babel-cli babel-plugin-transform-react-jsx
+ - cd ./../../
  - cd MDACSTest
  - dotnet run "./../MDACSApp/webres"
 before_cache: true
