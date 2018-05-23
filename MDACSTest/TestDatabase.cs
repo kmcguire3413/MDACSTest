@@ -116,10 +116,10 @@ public class TestPlatform
             fp.Write(buf, 0, buf.Length);
             fp.Dispose();
 
-            appProcess = Process.Start(cfg.appExecutablePath, $"{Path.Combine(pathBase, "appconfig.json")}");
-            authProcess = Process.Start(cfg.authExecutablePath, $"{Path.Combine(pathBase, "authconfig.json")}");
-            dbProcess = Process.Start(cfg.dbExecutablePath, $"{Path.Combine(pathBase, "dbconfig.json")}");
-            cmdProcess = Process.Start(cfg.cmdExecutablePath, $"{Path.Combine(pathBase, "cmdconfig.json")}");
+            appProcess = Process.Start(cfg.dotnetExecutablePath, $"\"{cfg.appExecutablePath}\" \"{Path.Combine(pathBase, "appconfig.json")}\"");
+            authProcess = Process.Start(cfg.dotnetExecutablePath, $"\"{cfg.authExecutablePath}\" \"{Path.Combine(pathBase, "authconfig.json")}\"");
+            dbProcess = Process.Start(cfg.dotnetExecutablePath, $"\"{cfg.dbExecutablePath}\" \"{Path.Combine(pathBase, "dbconfig.json")}\"");
+            cmdProcess = Process.Start(cfg.dotnetExecutablePath, $"\"{cfg.cmdExecutablePath}\" \"{Path.Combine(pathBase, "cmdconfig.json")}\"");
         }
 
         ~TestPlatform()
@@ -142,6 +142,7 @@ public class TestPlatform
         public string dbExecutablePath;
         public string authExecutablePath;
         public string cmdExecutablePath;
+        public string dotnetExecutablePath;
     }
 
     public class TestDatabase

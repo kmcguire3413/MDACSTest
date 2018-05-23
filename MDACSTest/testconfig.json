@@ -1,0 +1,8 @@
+{
+    "webResourcesPath": "../MDACSApp/MDACSApp/webres",
+    "appExecutablePath": "../MDACSApp/MDACSApp/bin/Debug/netcoreapp2.0/MDACSApp.dll",
+    "authExecutablePath": "../MDACSAuth/MDACSAuth/bin/Debug/netcoreapp2.0/MDACSAuth.dll",
+    "dbExecutablePath": "../MDACSDatabase/MDACSDatabase/bin/Debug/netcoreapp2.0/MDACSDatabase.dll",
+    "cmdExecutablePath": "../MDACSCommand/MDACSCommand/bin/Debug/netcoreapp2.0/MDACSCommand.dll",
+    "dotnetExecutablePath": "/usr/bin/dotnet"
+}
