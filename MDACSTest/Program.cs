@@ -12,9 +12,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using MDACS.Server;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace MDACS.Test
 {
@@ -63,130 +63,6 @@ namespace MDACS.Test
             var tsk = minfo.Invoke(instance, null) as Task;
 
             tsk.Wait();
-        }
-    }
-
-    public class TestPlatform
-    {
-        public String path_base { get; }
-
-        public TestPlatform(string webResourcesPath)
-        {
-            path_base = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
-
-            File.Delete(path_base);
-
-            Directory.CreateDirectory(path_base);
-
-            var dbcfg = new MDACS.Database.ProgramConfig();
-            var authcfg = new MDACS.Auth.ProgramConfig();
-            var appcfg = new MDACS.App.ProgramConfig();
-
-            var config_path = Path.Combine(path_base, "config");
-            var data_path = Path.Combine(path_base, "data");
-            var metajournal_path = Path.Combine(path_base, "journal");
-
-            var asm = System.Reflection.Assembly.GetExecutingAssembly();
-
-            var security_path = Path.Combine(path_base, "security");
-
-            var cert_path = Path.Combine(security_path, "cert.pfx");
-
-            var users_path = Path.Combine(path_base, "users.json");
-
-            Directory.CreateDirectory(config_path);
-            Directory.CreateDirectory(data_path);
-            Directory.CreateDirectory(security_path);
-
-            FileStream fp;
-
-            using (var asm_stream = asm.GetManifestResourceStream("MDACSTest.test.pfx"))
-            {
-                fp = File.OpenWrite(cert_path);
-                asm_stream.CopyTo(fp);
-                fp.Dispose();
-            }
-
-            /*using (var asm_stream = asm.GetManifestResourceStream("MDACSTest.users.json"))
-            {
-                fp = File.OpenWrite(users_path);
-                asm_stream.CopyTo(fp);
-                fp.Dispose();
-            }*/
-
-            dbcfg.auth_url = "http://localhost:34002";
-            dbcfg.config_path = config_path;
-            dbcfg.data_path = data_path;
-            dbcfg.metajournal_path = metajournal_path;
-            dbcfg.port = 34001;
-            //dbcfg.ssl_cert_path = cert_path;
-            //dbcfg.ssl_cert_pass = "hello";
-
-            authcfg.data_base_path = path_base;
-            authcfg.port = 34002;
-            //authcfg.ssl_cert_path = cert_path;
-            //authcfg.ssl_cert_pass = "hello";
-
-            appcfg.auth_url = "http://localhost:34002";
-            appcfg.db_url = "http://localhost:34001";
-            appcfg.port = 34000;
-            appcfg.web_resources_path = webResourcesPath;
-            //appcfg.ssl_cert_path = cert_path;
-            //appcfg.ssl_cert_pass = "hello";
-
-            byte[] buf = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dbcfg, Formatting.Indented));
-            fp = File.OpenWrite(Path.Combine(path_base, "dbconfig.json"));
-            fp.Write(buf, 0, buf.Length);
-            fp.Dispose();
-
-            buf = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(authcfg, Formatting.Indented));
-            fp = File.OpenWrite(Path.Combine(path_base, "authconfig.json"));
-            fp.Write(buf, 0, buf.Length);
-            fp.Dispose();
-
-            buf = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(appcfg, Formatting.Indented));
-            fp = File.OpenWrite(Path.Combine(path_base, "appconfig.json"));
-            fp.Write(buf, 0, buf.Length);
-            fp.Dispose();
-
-            var db_thread = new Thread(() =>
-            {
-                MDACS.Database.Program.Main(new string[] {
-                   Path.Combine(path_base, "dbconfig.json")
-                });
-            });
-
-            db_thread.IsBackground = true;
-
-            var auth_thread = new Thread(() =>
-            {
-                MDACS.Auth.Program.Main(new string[] {
-                   Path.Combine(path_base, "authconfig.json")
-                });
-            });
-
-            auth_thread.IsBackground = true;
-
-            var app_thread = new Thread(() => 
-            {
-                MDACS.App.Program.Main(new string[] {
-                    Path.Combine(path_base, "appconfig.json")
-                });
-            });
-
-            app_thread.IsBackground = true;
-
-            // Suppress the database output.
-            //MDACS.Database.Program.logger_output_base += (JObject item) => true;
-
-            auth_thread.Start();
-            db_thread.Start();
-            app_thread.Start();
-        }
-
-        ~TestPlatform()
-        {
-
         }
     }
 
@@ -241,6 +117,10 @@ namespace MDACS.Test
 
                     if (fact == null)
                     {
+                        continue;
+                    }
+
+                    if (!tmeth.Name.Equals("TestCommand")) {
                         continue;
                     }
 

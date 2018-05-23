@@ -1,5 +1,4 @@
-﻿using MDACS.Server;
-using MDACS.Test;
+﻿using MDACS.Test;
 using MDACS.API;
 
 using System;
@@ -18,17 +17,147 @@ using Newtonsoft.Json;
 
 namespace MDACSTest
 {
-    public class TestDatabase
+public class TestPlatform
     {
-        private TestPlatform platform;
-        private Session session;
+        Process appProcess;
+        Process authProcess;
+        Process dbProcess;
+        Process cmdProcess;        
+        
+        public string pathBase { get; }
 
-        public TestDatabase(string webResourcesPath)
+        public TestPlatform(TestConfig cfg)
         {
-            CreateNewPlatformAndSession(webResourcesPath);
+            pathBase = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+
+            File.Delete(pathBase);
+
+            Directory.CreateDirectory(pathBase);
+
+            //var dbCfg = new MDACS.Database.ProgramConfig();
+            //var authCfg = new MDACS.Auth.ProgramConfig();
+            //var appCfg = new MDACS.App.ProgramConfig();
+            //var cmdCfg = new MDACS.Command.ProgramConfig();
+
+            var configPath = Path.Combine(pathBase, "config");
+            var dataPath = Path.Combine(pathBase, "data");
+            var metajournalPath = Path.Combine(pathBase, "journal");
+
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+
+            var securityPath = Path.Combine(pathBase, "security");
+            var certPath = Path.Combine(securityPath, "cert.pfx");
+            var usersPath = Path.Combine(pathBase, "users.json");
+
+            Directory.CreateDirectory(configPath);
+            Directory.CreateDirectory(dataPath);
+            Directory.CreateDirectory(securityPath);
+
+            FileStream fp;
+
+            using (var asmStream = asm.GetManifestResourceStream("MDACSTest.test.pfx"))
+            {
+                fp = File.OpenWrite(certPath);
+                asmStream.CopyTo(fp);
+                fp.Dispose();
+            }
+
+            var dbCfg = new JObject();
+            var authCfg = new JObject();
+            var appCfg = new JObject();
+            var cmdCfg = new JObject();
+
+            dbCfg["auth_url"] = "http://localhost:34002";
+            dbCfg["config_path"] = configPath;
+            dbCfg["data_path"] = dataPath;
+            dbCfg["metajournal_path"] = metajournalPath;
+            dbCfg["port"] = 34001;
+            //dbcfg.ssl_cert_path = cert_path;
+            //dbcfg.ssl_cert_pass = "hello";
+
+            authCfg["dataBasePath"] = pathBase;
+            authCfg["port"] = 34002;
+            authCfg["maximumChallengesOutstanding"] = 100;
+            authCfg["cmdUrl"] = "http://localhost:34015";
+            authCfg["authUrl"] = "http://localhost:34002";
+            authCfg["username"] = "admin";
+            authCfg["password"] = "abc";
+            authCfg["serviceGuid"] = "XKSm@K#K2o3MDaslSKDMSDM2n32#@K#!K@wdaSM<dL21k#L@!MWMDamdqwmelmsla";
+            //authcfg.sslCertPath = cert_path;
+            //authcfg.sslCertPass = "hello";
+
+            appCfg["auth_url"] = "http://localhost:34002";
+            appCfg["db_url"] = "http://localhost:34001";
+            appCfg["port"] = 34000;
+            appCfg["web_resources_path"] = cfg.webResourcesPath;
+            //appcfg.ssl_cert_path = cert_path;
+            //appcfg.ssl_cert_pass = "hello";
+
+            cmdCfg["authUrl"] = "http://localhost:34002";
+            cmdCfg["port"] = 34015;
+
+            byte[] buf = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dbCfg, Formatting.Indented));
+            fp = File.OpenWrite(Path.Combine(pathBase, "dbconfig.json"));
+            fp.Write(buf, 0, buf.Length);
+            fp.Dispose();
+
+            buf = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(cmdCfg, Formatting.Indented));
+            fp = File.OpenWrite(Path.Combine(pathBase, "cmdconfig.json"));
+            fp.Write(buf, 0, buf.Length);
+            fp.Dispose();            
+
+            buf = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(authCfg, Formatting.Indented));
+            fp = File.OpenWrite(Path.Combine(pathBase, "authconfig.json"));
+            fp.Write(buf, 0, buf.Length);
+            fp.Dispose();
+
+            buf = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(appCfg, Formatting.Indented));
+            fp = File.OpenWrite(Path.Combine(pathBase, "appconfig.json"));
+            fp.Write(buf, 0, buf.Length);
+            fp.Dispose();
+
+            appProcess = Process.Start(cfg.appExecutablePath, $"{Path.Combine(pathBase, "appconfig.json")}");
+            authProcess = Process.Start(cfg.authExecutablePath, $"{Path.Combine(pathBase, "authconfig.json")}");
+            dbProcess = Process.Start(cfg.dbExecutablePath, $"{Path.Combine(pathBase, "dbconfig.json")}");
+            cmdProcess = Process.Start(cfg.cmdExecutablePath, $"{Path.Combine(pathBase, "cmdconfig.json")}");
         }
 
-        private bool CreateNewPlatformAndSession(string webResourcesPath)
+        ~TestPlatform()
+        {
+            appProcess.Kill();
+            authProcess.Kill();
+            dbProcess.Kill();
+            cmdProcess.Kill();
+
+            appProcess.WaitForExit();
+            authProcess.WaitForExit();
+            dbProcess.WaitForExit();
+            cmdProcess.WaitForExit();
+        }
+    }
+
+    public class TestConfig {
+        public string webResourcesPath;
+        public string appExecutablePath;
+        public string dbExecutablePath;
+        public string authExecutablePath;
+        public string cmdExecutablePath;
+    }
+
+    public class TestDatabase
+    {
+        TestPlatform    platform;
+        Session         session;
+        TestConfig      cfg;
+
+        public TestDatabase(string configDataPath)
+        {
+            cfg = JsonConvert.DeserializeObject<TestConfig>(File.ReadAllText(configDataPath));
+
+            CreateNewPlatformAndSession();
+        }
+
+        bool CreateNewPlatformAndSession()
         {
             bool CheckTrust(
                 object sender, 
@@ -43,13 +172,14 @@ namespace MDACSTest
 
             ServicePointManager.ServerCertificateValidationCallback = CheckTrust;
 
-            platform = new TestPlatform(webResourcesPath);
+            platform = new TestPlatform(cfg);
 
             Thread.Sleep(2000);
 
             session = new Session(
                 "http://localhost:34002",
                 "http://localhost:34001",
+                "http://localhost:34015",
                 "admin",
                 "abc"
             );
@@ -316,6 +446,7 @@ namespace MDACSTest
             var session = new Session(
                 "http://localhost:34002",
                 "http://localhost:34001",
+                "http://localhost:34015",
                 "apple",
                 "abc"
             );
@@ -348,6 +479,7 @@ namespace MDACSTest
             var session = new Session(
                 "http://localhost:34002",
                 "http://localhost:34001",
+                "http://localhost:34015",
                 "apple",
                 "abc"
             );
@@ -371,6 +503,7 @@ namespace MDACSTest
             var session = new Session(
                 "http://localhost:34002",
                 "http://localhost:34001",
+                "http://localhost:34015",
                 "apple",
                 "abc"
             );
@@ -427,6 +560,14 @@ namespace MDACSTest
                     Assert.Failed();
                 }
             }
+        }
+
+        [FactAsync]
+        async Task TestCommand() {
+            await session.ExecuteCommandAsync(
+                "auth",
+                "test command from test program"
+            );
         }
     }
 }

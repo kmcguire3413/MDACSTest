@@ -13,3 +13,6 @@
 [submodule "MDACSAPI"]
 	path = MDACSAPI
 	url = https://github.com/kmcguire3413/MDACSAPI.git
+[submodule "MDACSCommand"]
+	path = MDACSCommand
+	url = git@github.com:kmcguire3413/MDACSCommand.git

@@ -22,8 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../MDACSAuth/MDACSAuth/MDACSAuth.csproj" />
-    <ProjectReference Include="../MDACSDatabase/MDACSDatabase/MDACSDatabase.csproj" />
-    <ProjectReference Include="../MDACSApp/MDACSApp/MDACSApp.csproj" />
+    <ProjectReference Include="../MDACSAPI/MDACSAPI.csproj" />
   </ItemGroup>
 </Project>
