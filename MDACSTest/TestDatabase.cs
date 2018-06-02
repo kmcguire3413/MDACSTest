@@ -17,7 +17,7 @@ using Newtonsoft.Json;
 
 namespace MDACSTest
 {
-public class TestPlatform
+public class TestPlatform : IDisposable
     {
         Process appProcess;
         Process authProcess;
@@ -120,10 +120,21 @@ public class TestPlatform
             authProcess = Process.Start(cfg.dotnetExecutablePath, $"\"{cfg.authExecutablePath}\" \"{Path.Combine(pathBase, "authconfig.json")}\"");
             dbProcess = Process.Start(cfg.dotnetExecutablePath, $"\"{cfg.dbExecutablePath}\" \"{Path.Combine(pathBase, "dbconfig.json")}\"");
             cmdProcess = Process.Start(cfg.dotnetExecutablePath, $"\"{cfg.cmdExecutablePath}\" \"{Path.Combine(pathBase, "cmdconfig.json")}\"");
+
+            Thread.Sleep(1000 * 5);
         }
 
-        ~TestPlatform()
-        {
+        bool disposed;
+
+        public void Dispose() {
+            if (disposed) {
+                return;
+            }
+
+            Console.WriteLine("DISPOSING IT!!!");
+
+            disposed = true;
+
             appProcess.Kill();
             authProcess.Kill();
             dbProcess.Kill();
@@ -133,6 +144,11 @@ public class TestPlatform
             authProcess.WaitForExit();
             dbProcess.WaitForExit();
             cmdProcess.WaitForExit();
+        }
+
+        ~TestPlatform()
+        {
+            Dispose();
         }
     }
 
@@ -160,7 +176,7 @@ public class TestPlatform
 
         bool CreateNewPlatformAndSession()
         {
-            bool CheckTrust(
+            /*bool CheckTrust(
                 object sender, 
                 X509Certificate cert, 
                 X509Chain chain, 
@@ -172,7 +188,8 @@ public class TestPlatform
             }
 
             ServicePointManager.ServerCertificateValidationCallback = CheckTrust;
-
+            */
+            
             platform = new TestPlatform(cfg);
 
             Thread.Sleep(2000);
@@ -565,6 +582,7 @@ public class TestPlatform
 
         [FactAsync]
         async Task TestCommand() {
+            Debug.WriteLine("????????");
             await session.ExecuteCommandAsync(
                 "auth",
                 "test command from test program"
