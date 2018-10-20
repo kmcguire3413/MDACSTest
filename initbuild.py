@@ -19,8 +19,22 @@ def InitAndBuildSubService(baseDir, fullDir):
     for cmd in cmds1:
             ExecuteCommand(cmd, cwd=fullDir)
 
+def InitMDACSAppJSXCompiler():
+    ExecuteCommand(
+        [ 'npm', 'install', '--save-dev', 'babel-cli' ],
+        cwd='./MDACSApp/MDACSApp'
+    )
+
+    ExecuteCommand(
+        [ 'npm', 'install', '--save-dev', 'babel-plugin-transform-react-jsx' ],
+        cwd='./MDACSApp/MDACSApp'
+    )
+
 def InitAndBuildEverything():
     services = ['MDACSApp', 'MDACSDatabase', 'MDACSCommand', 'MDACSAuth']
+
+    InitMDACSAppJSXCompiler()
+
     for service in services:
         InitAndBuildSubService(
             './%s' % service,
